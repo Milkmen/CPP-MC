@@ -118,4 +118,23 @@ public:
     }
 };
 
+class c_s2c_chunk_data : public c_packet_s2c {
+public:
+    int32_t chunk_x, chunk_y;
+    uint8_t ground_up_continuous;
+    int32_t primary_bit_mask;
+    int32_t size;
+    std::vector<uint8_t> data;
+    int32_t block_entity_count;
+    c_s2c_chunk_data(const std::string& name, const std::string& uuid)
+        : player_name(name), player_uuid(uuid) {}
+
+    void serialize(c_packet& packet) const override {
+        packet.write_var_int(0x02);
+        packet.write_string(this->player_uuid, 36);  // UUID is 36 characters
+        packet.write_string(this->player_name, 16);  // Minecraft names max 16
+        packet.finalize();
+    }
+};
+
 #endif

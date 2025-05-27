@@ -28,6 +28,8 @@ public:
     void write_float(float value);
     double read_double();
     void write_double(double value);
+    std::string read_nbt_string();
+    void write_nbt_string(const std::string& str);
     size_t get_size();
     std::vector<uint8_t>& get_raw();
     void finalize();

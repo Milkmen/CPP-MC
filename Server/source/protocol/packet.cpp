@@ -243,6 +243,29 @@ void c_packet::write_double(double value)
     this->data.push_back(raw & 0xFF);
 }
 
+void c_packet::write_nbt_string(const std::string& str) {
+    if (str.length() > 0xFFFF)
+        throw std::runtime_error("NBT string too long");
+
+    this->write_byte((str.length() >> 8) & 0xFF);  // High byte
+    write_byte(str.length() & 0xFF);         // Low byte
+
+    for (char c : str) {
+        this->write_byte(static_cast<uint8_t>(c));
+    }
+}
+
+std::string c_packet::read_nbt_string() {
+    uint16_t length = (this->read_byte() << 8) | this->read_byte();
+    std::string result;
+
+    for (int i = 0; i < length; ++i) {
+        result += static_cast<char>(this->read_byte());
+    }
+
+    return result;
+}
+
 size_t c_packet::get_size()
 {
     return this->data.size();
