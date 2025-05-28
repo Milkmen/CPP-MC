@@ -11,6 +11,7 @@ private:
     std::vector<uint8_t> data;
     int32_t read_index = 0;
 public:
+    uint32_t id;
     c_packet() = default;
     explicit c_packet(const std::vector<uint8_t>& raw);
 
@@ -28,6 +29,8 @@ public:
     void write_float(float value);
     double read_double();
     void write_double(double value);
+    int64_t read_long();
+    void write_long(int64_t value);
     std::string read_nbt_string();
     void write_nbt_string(const std::string& str);
     size_t get_size();

@@ -3,11 +3,54 @@
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\protocol\packet.cpp" />
-    <ClCompile Include="source\protocol\player.cpp" />
+    <ClCompile Include="source\server\server.cpp" />
+    <ClCompile Include="libs\libnbt\nbt.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\zlib_decompress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\crc32.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\deflate_compress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\deflate_decompress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\gzip_compress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\gzip_decompress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\utils.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\zlib_compress.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\adler32.c" />
+    <ClCompile Include="libs\libnbt\libdeflate\lib\x86\cpu_features.c" />
+    <ClCompile Include="libs\simpleini\ConvertUTF.c" />
+    <ClCompile Include="source\server\player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\protocol\packet.h" />
-    <ClInclude Include="source\protocol\player.h" />
     <ClInclude Include="source\protocol\packets.h" />
+    <ClInclude Include="source\server\server.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\bt_matchfinder.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\cpu_features_common.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\crc32_multipliers.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\crc32_tables.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\decompress_template.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\deflate_compress.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\deflate_constants.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\gzip_constants.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\hc_matchfinder.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\ht_matchfinder.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\lib_common.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\matchfinder_common.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\zlib_constants.h" />
+    <ClInclude Include="libs\libnbt\nbt.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\common_defs.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\libdeflate.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\matchfinder_impl.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\adler32_impl.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\adler32_template.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\cpu_features.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\crc32_impl.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\crc32_pclmul_template.h" />
+    <ClInclude Include="libs\libnbt\libdeflate\lib\x86\decompress_impl.h" />
+    <ClInclude Include="libs\simpleini\ConvertUTF.h" />
+    <ClInclude Include="libs\simpleini\SimpleIni.h" />
+    <ClInclude Include="source\server\player.h" />
+    <ClInclude Include="source\server\network.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.ini" />
   </ItemGroup>
 </Project>

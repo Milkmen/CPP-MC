@@ -7,4 +7,4 @@ This is a basic implementation of a Minecraft 1.12.2 (Protocol 340) Server
 - [X] Login Sequence
 - [ ] Keep Alive
 - [ ] World/Chunk Loading 
-- [ ] Chunk Loading
+- [ ] Chat

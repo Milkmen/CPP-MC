@@ -158,15 +158,15 @@ void c_packet::write_string(const std::string& str, size_t max_chars) {
 
 int32_t c_packet::read_int()
 {
-    if (read_index + 4 > data.size()) {
+    if (this->read_index + 4 > this->data.size()) {
         throw std::runtime_error("Not enough bytes to read int");
     }
 
     int32_t result = 0;
-    result |= (data[read_index++] << 24);
-    result |= (data[read_index++] << 16);
-    result |= (data[read_index++] << 8);
-    result |= (data[read_index++]);
+    result |= (this->data[read_index++] << 24);
+    result |= (this->data[read_index++] << 16);
+    result |= (this->data[read_index++] << 8);
+    result |= (this->data[read_index++]);
 
     return result;
 }
@@ -181,15 +181,15 @@ void c_packet::write_int(int32_t value)
 
 float c_packet::read_float()
 {
-    if (read_index + 4 > data.size()) {
+    if (this->read_index + 4 > this->data.size()) {
         throw std::runtime_error("Not enough bytes to read float");
     }
 
     uint32_t raw = 0;
-    raw |= (static_cast<uint32_t>(data[read_index++]) << 24);
-    raw |= (static_cast<uint32_t>(data[read_index++]) << 16);
-    raw |= (static_cast<uint32_t>(data[read_index++]) << 8);
-    raw |= (static_cast<uint32_t>(data[read_index++]));
+    raw |= (static_cast<uint32_t>(this->data[this->read_index++]) << 24);
+    raw |= (static_cast<uint32_t>(this->data[this->read_index++]) << 16);
+    raw |= (static_cast<uint32_t>(this->data[this->read_index++]) << 8);
+    raw |= (static_cast<uint32_t>(this->data[this->read_index++]));
 
     float result;
     std::memcpy(&result, &raw, sizeof(float));
@@ -209,19 +209,19 @@ void c_packet::write_float(float value)
 
 double c_packet::read_double()
 {
-    if (read_index + 8 > data.size()) {
+    if (this->read_index + 8 > this->data.size()) {
         throw std::runtime_error("Not enough bytes to read double");
     }
 
     uint64_t raw = 0;
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 56);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 48);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 40);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 32);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 24);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 16);
-    raw |= (static_cast<uint64_t>(data[read_index++]) << 8);
-    raw |= (static_cast<uint64_t>(data[read_index++]));
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 56);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 48);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 40);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 32);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 24);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 16);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]) << 8);
+    raw |= (static_cast<uint64_t>(this->data[this->read_index++]));
 
     double result;
     std::memcpy(&result, &raw, sizeof(double));
@@ -243,12 +243,33 @@ void c_packet::write_double(double value)
     this->data.push_back(raw & 0xFF);
 }
 
+void c_packet::write_long(int64_t value)
+{
+    for (int i = 7; i >= 0; --i)
+    {
+        this->data.push_back(static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+    }
+}
+
+int64_t c_packet::read_long()
+{
+    if (this->read_index + 8 > this->data.size())
+        throw std::runtime_error("Not enough data to read long");
+
+    int64_t result = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        result = (result << 8) | this->data[this->read_index++];
+    }
+    return result;
+}
+
 void c_packet::write_nbt_string(const std::string& str) {
     if (str.length() > 0xFFFF)
         throw std::runtime_error("NBT string too long");
 
     this->write_byte((str.length() >> 8) & 0xFF);  // High byte
-    write_byte(str.length() & 0xFF);         // Low byte
+    this->write_byte(str.length() & 0xFF);         // Low byte
 
     for (char c : str) {
         this->write_byte(static_cast<uint8_t>(c));
