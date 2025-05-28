@@ -143,6 +143,10 @@ int c_server::run()
                             c_packet packet(packet_bytes);
                             packet.id = packet.read_var_int();
 
+                            if (players.find(fd) == players.end()) {
+                                this->players[fd].client_fd = fd;
+                            }
+
                             this->players[fd].on_receive(packet);
                         }
                         catch (const std::exception& e) {

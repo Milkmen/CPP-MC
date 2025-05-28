@@ -73,26 +73,56 @@ void c_player::on_receive(c_packet& packet)
 
 void c_player::send_packet(c_packet& packet)
 {
-    if (packet.get_size() > 1)
-    {
-        auto& out = packet.get_raw();
-        printf("Sending packet of %zu bytes: ", out.size());
-        for (size_t i = 0; i < min(out.size(), size_t(20)); i++) {
-            printf("%02X ", out[i]);
-        }
-        if (out.size() > 20) printf("...");
-        printf("\n");
+    if (packet.get_size() <= 1) return;
 
-        int sent = send(this->connection.client_fd,
-            reinterpret_cast<const char*>(out.data()),
-            static_cast<int>(out.size()),
+    auto& out = packet.get_raw();
+    printf("Sending packet of %zu bytes: ", out.size());
+    for (size_t i = 0; i < min(out.size(), size_t(20)); i++) {
+        printf("%02X ", out[i]);
+    }
+    if (out.size() > 20) printf("...");
+    printf("\n");
+
+    size_t total_sent = 0;
+    size_t total_size = out.size();
+
+    while (total_sent < total_size) {
+        int sent = send(this->client_fd,
+            reinterpret_cast<const char*>(out.data() + total_sent),
+            static_cast<int>(total_size - total_sent),
             0);
 
         if (sent == SOCK_ERR_VAL) {
-            printf("Send failed with error\n");
+#ifdef _WIN32
+            int error = WSAGetLastError();
+            if (error == WSAEWOULDBLOCK) {
+#else
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+#endif
+                // Socket buffer is full, wait a bit and try again
+                // In a real implementation, you might want to use select() or poll()
+                // or queue the data for later sending
+                printf("Socket would block, retrying...\n");
+                continue;
+            }
+            else {
+#ifdef _WIN32
+                printf("Send failed with error: %d\n", error);
+#else
+                printf("Send failed with error: %s (errno: %d)\n", strerror(errno), errno);
+#endif
+                return;
+            }
+            }
+        else if (sent == 0) {
+            printf("Connection closed by peer\n");
+            return;
         }
         else {
-            printf("Successfully sent %d bytes\n", sent);
+            total_sent += sent;
+            printf("Sent %d bytes (total: %zu/%zu)\n", sent, total_sent, total_size);
         }
-    }
+        }
+
+    printf("Successfully sent all %zu bytes\n", total_size);
 }
