@@ -29,10 +29,12 @@ public:
 	std::string name;
 	connection_state_t state;
 	socket_t	client_fd;
+	void* server_ptr;
 
 	c_player() : name(""), state(connection_state_t::invalid) {}
 	void on_receive(c_packet& packet);
 	void send_packet(c_packet& packet);
+	void send_message(std::string& message);
 };
 
 #endif

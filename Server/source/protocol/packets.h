@@ -55,6 +55,19 @@ public:
     }
 };
 
+class c_c2s_chat_message : public c_packet_c2s
+{
+public:
+    std::string message;
+
+    c_c2s_chat_message() = default;
+
+    void deserialize(c_packet& packet) override
+    {
+        this->message = packet.read_string(256);
+    }
+};
+
 
 /*
     Server to Client Packets
@@ -176,6 +189,22 @@ public:
             packet.write_byte(this->data.at(i));
         packet.write_var_int(this->block_entity_count);
         packet.write_nbt_string(this->nbt);
+        packet.finalize();
+    }
+};
+
+class c_s2c_chat_message : public c_packet_s2c {
+public:
+    std::string json;
+    uint8_t type;
+
+    c_s2c_chat_message(std::string& json, uint8_t type)
+        : json(json), type(type) {}
+
+    void serialize(c_packet& packet) const override {
+        packet.write_var_int(0x0F);
+        packet.write_string(this->json, 32767);
+        packet.write_byte(this->type);
         packet.finalize();
     }
 };

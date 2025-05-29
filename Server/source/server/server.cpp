@@ -144,6 +144,7 @@ int c_server::run()
                             packet.id = packet.read_var_int();
 
                             if (players.find(fd) == players.end()) {
+                                this->players[fd].server_ptr = this;
                                 this->players[fd].client_fd = fd;
                             }
 
@@ -164,4 +165,14 @@ int c_server::run()
 #endif
     CLOSE_SOCKET(server_fd);
     return 0;
+}
+
+void c_server::broadcast(std::string& message)
+{
+    for (auto& x : this->players)
+    {
+        x.second.send_message(message);
+    }
+
+    this->chat_messages.push_back(message);
 }

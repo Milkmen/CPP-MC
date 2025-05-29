@@ -22,8 +22,10 @@ private:
 public:
 	server_config_t config;
 	std::map<socket_t, c_player> players;
+	std::vector<std::string> chat_messages;
 	c_server(const char* config_name);
 	int run();
+	void broadcast(std::string& message);
 };
 
 #endif

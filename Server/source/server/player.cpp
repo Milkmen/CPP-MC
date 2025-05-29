@@ -1,4 +1,5 @@
 #include "player.h"
+#include "server.h"
 
 void c_player::on_receive(c_packet& packet)
 {
@@ -15,13 +16,11 @@ void c_player::on_receive(c_packet& packet)
 
                 this->name = login_start.player_name;
 
-                // Login Success packet (0x02)
                 c_packet packet_out;
                 c_s2c_login_success login_success = c_s2c_login_success(login_start.player_name, "123e4567-e89b-12d3-a456-426614174000");
                 login_success.serialize(packet_out);
                 this->send_packet(packet_out);
 
-                // Join Game packet (0x23)
                 packet_out.clear();
                 c_s2c_join_game join_game = c_s2c_join_game
                 (
@@ -36,7 +35,6 @@ void c_player::on_receive(c_packet& packet)
                 join_game.serialize(packet_out);
                 this->send_packet(packet_out);
 
-                /* Player Positionand Look packet(0x2F)*/
                 packet_out.clear();
                 c_s2c_position_look pos_look = c_s2c_position_look
                 (
@@ -60,7 +58,13 @@ void c_player::on_receive(c_packet& packet)
             
             break;
         }
-
+        case 0x02:
+        {
+            c_c2s_chat_message chat_message = c_c2s_chat_message();
+            chat_message.deserialize(packet);
+            ((c_server*)this->server_ptr)->broadcast(chat_message.message);
+            break;
+        }
         default:
             printf("Unknown packet ID: 0x%02X\n", packet.id);
             break;
@@ -69,6 +73,20 @@ void c_player::on_receive(c_packet& packet)
     catch (const std::exception& e) {
         printf("Error processing packet: %s\n", e.what());
     }
+}
+
+void c_player::send_message(std::string& message)
+{
+    c_packet packet;
+    std::string chat_json = "{\"text\":\"<" + this->name + "> " + message + "\"}";
+    c_s2c_chat_message chat_packet = c_s2c_chat_message
+    (
+        chat_json,
+        0
+    );
+    chat_packet.serialize(packet);
+
+    this->send_packet(packet);
 }
 
 void c_player::send_packet(c_packet& packet)
