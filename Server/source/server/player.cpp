@@ -9,7 +9,16 @@ void c_player::on_receive(c_packet& packet)
         {
         case 0x0:
         {
-            if (this->state != connection_state_t::invalid)
+            if (this->state == connection_state_t::handshake)
+            {
+                c_c2s_handshake handshake = c_c2s_handshake();
+                handshake.deserialize(packet);
+                printf("Handshake Received with Version: %d\r\n", handshake.protocol_version);
+                this->state = (connection_state_t) handshake.next_state;
+                break;
+            }
+
+            if (this->state == connection_state_t::login)
             {
                 c_c2s_login_start login_start = c_c2s_login_start();
                 login_start.deserialize(packet);
@@ -46,16 +55,24 @@ void c_player::on_receive(c_packet& packet)
                 pos_look.serialize(packet_out);
                 this->send_packet(packet_out);
 
-                this->state = connection_state_t::login;
-            }
-            else
-            {
-                c_c2s_handshake handshake = c_c2s_handshake();
-                handshake.deserialize(packet);
-                printf("Handshake Received with Version: %d\r\n", handshake.protocol_version);
-                this->state = connection_state_t::login;
+                this->state = connection_state_t::play;
             }
             
+            break;
+        }
+        case 0x01:
+        {
+            if (this->state == connection_state_t::status)
+            {
+                c_c2s_ping ping = c_c2s_ping();
+                ping.deserialize(packet);
+
+                c_s2c_pong pong = c_s2c_pong(ping.time);
+                c_packet pack;
+                pong.serialize(pack);
+
+                this->send_packet(pack);
+            }
             break;
         }
         case 0x02:
@@ -92,7 +109,7 @@ void c_player::send_message(std::string& message)
 void c_player::send_packet(c_packet& packet)
 {
     if (packet.get_size() <= 1) return;
-
+    std::lock_guard<std::mutex> lock(((c_server*) this->server_ptr)->send_mutex);
     auto& out = packet.get_raw();
     printf("Sending packet of %zu bytes: ", out.size());
     for (size_t i = 0; i < min(out.size(), size_t(20)); i++) {

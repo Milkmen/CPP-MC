@@ -14,10 +14,9 @@ world_type_t;
 
 typedef enum
 {
-	invalid = -1,
-	handshake,
-	login,
+	handshake = 0,
 	status,
+	login,
 	play
 }
 connection_state_t;
@@ -28,10 +27,14 @@ private:
 public:
 	std::string name;
 	connection_state_t state;
+	uint64_t last_keep_alive;
 	socket_t	client_fd;
 	void* server_ptr;
 
-	c_player() : name(""), state(connection_state_t::invalid) {}
+	c_player() : name(""), state(connection_state_t::handshake) { }
+	c_player(const c_player&) = delete;
+	c_player& operator=(const c_player&) = delete;
+
 	void on_receive(c_packet& packet);
 	void send_packet(c_packet& packet);
 	void send_message(std::string& message);

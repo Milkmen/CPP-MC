@@ -68,6 +68,19 @@ public:
     }
 };
 
+class c_c2s_ping : public c_packet_c2s
+{
+public:
+    uint64_t time;
+
+    c_c2s_ping() = default;
+
+    void deserialize(c_packet& packet) override
+    {
+        this->time = packet.read_long();
+    }
+};
+
 
 /*
     Server to Client Packets
@@ -205,6 +218,20 @@ public:
         packet.write_var_int(0x0F);
         packet.write_string(this->json, 32767);
         packet.write_byte(this->type);
+        packet.finalize();
+    }
+};
+
+class c_s2c_pong : public c_packet_s2c {
+public:
+    uint64_t time;
+
+    c_s2c_pong(uint64_t time)
+        : time(time) {}
+
+    void serialize(c_packet& packet) const override {
+        packet.write_var_int(0x01);
+        packet.write_long(this->time);
         packet.finalize();
     }
 };

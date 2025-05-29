@@ -63,7 +63,11 @@ int c_server::run()
 
     std::map<socket_t, std::vector<uint8_t>> client_buffers;
 
-    while (true) {
+    this->running = true;
+
+    this->update_thread = std::thread(&c_server::loop, this);
+
+    while (this->running) {
         read_fds = master_set; // Copy the set
 
         int activity = select(max_fd + 1, &read_fds, nullptr, nullptr, nullptr);
@@ -160,11 +164,64 @@ int c_server::run()
         }
     }
 
+    this->running = false;
+
+    if (this->update_thread.joinable()) {
+        this->update_thread.join();
+    }
+
 #ifdef _WIN32
     WSACleanup();
 #endif
     CLOSE_SOCKET(server_fd);
     return 0;
+}
+
+static inline uint64_t get_unix_millis() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+        ).count();
+}
+
+static inline void sleep_until_millis(uint64_t target_millis) {
+    auto target_time = std::chrono::system_clock::time_point(
+        std::chrono::milliseconds(target_millis)
+    );
+    std::this_thread::sleep_until(target_time);
+}
+
+void c_server::loop()
+{
+    const auto interval = 50; // 20 times per second
+    uint64_t next_time = get_unix_millis();
+
+    while (this->running) {
+        this->update();
+
+        next_time += interval;
+        sleep_until_millis(next_time);
+    }
+}
+
+void c_server::update()
+{
+    const uint64_t keep_alive_interval = 20000;
+    uint64_t now = get_unix_millis();
+
+    for (auto& x : this->players)
+    {
+        c_player& player = x.second;
+
+        if ((now - player.last_keep_alive) >= keep_alive_interval)
+        {
+            c_s2c_keep_alive keepalive = c_s2c_keep_alive(now);
+            c_packet packet;
+            keepalive.serialize(packet);
+            player.send_packet(packet);
+
+            player.last_keep_alive = now;
+        }
+    }
 }
 
 void c_server::broadcast(std::string& message)
