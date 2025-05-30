@@ -236,4 +236,18 @@ public:
     }
 };
 
+class c_s2c_status : public c_packet_s2c {
+public:
+    std::string json;
+
+    c_s2c_status(std::string& json)
+        : json(json) {}
+
+    void serialize(c_packet& packet) const override {
+        packet.write_var_int(0x00);
+        packet.write_string(this->json, 32767);
+        packet.finalize();
+    }
+};
+
 #endif

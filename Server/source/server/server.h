@@ -16,6 +16,7 @@ typedef struct
 {
 	uint8_t max_players;
 	uint16_t port;
+    std::string motd;
 }
 server_config_t;
 

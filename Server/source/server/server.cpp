@@ -3,6 +3,7 @@
 #include "../protocol/packets.h"
 
 #include <SimpleIni.h>
+#include <regex>
 
 c_server::c_server(const char* config_name)
 {
@@ -10,10 +11,12 @@ c_server::c_server(const char* config_name)
 	ini.LoadFile(config_name);
 
 	long port					= ini.GetLongValue("Server", "port", 25565);
-	long max_players			= ini.GetLongValue("Server", "max_players", 16);
+	long max_players			= ini.GetLongValue( "Server", "max_players", 16);
+    const char* motd            = ini.GetValue("Server", "motd", "");
 
 	this->config.port			= port > UINT16_MAX ? UINT16_MAX : port;
 	this->config.max_players	= max_players > UINT8_MAX ? UINT8_MAX : max_players;
+    this->config.motd = std::string(motd);
 
 	printf("Port: %d\n", this->config.port);
 	printf("Max Players: %d\n", this->config.max_players);

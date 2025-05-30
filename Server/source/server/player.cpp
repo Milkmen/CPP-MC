@@ -14,6 +14,7 @@ void c_player::on_receive(c_packet& packet)
                 c_c2s_handshake handshake = c_c2s_handshake();
                 handshake.deserialize(packet);
                 printf("Handshake Received with Version: %d\r\n", handshake.protocol_version);
+                printf("Next State: %d\r\n", handshake.next_state);
                 this->state = (connection_state_t) handshake.next_state;
                 break;
             }
@@ -47,7 +48,7 @@ void c_player::on_receive(c_packet& packet)
                 packet_out.clear();
                 c_s2c_position_look pos_look = c_s2c_position_look
                 (
-                    0.0, 0.0, 0.0,
+                    0.0, 64.0, 0.0,
                     0.f, 0.f,
                     0b00000000,
                     1
@@ -56,6 +57,16 @@ void c_player::on_receive(c_packet& packet)
                 this->send_packet(packet_out);
 
                 this->state = connection_state_t::play;
+            }
+            else if (this->state == connection_state_t::status)
+            {
+                std::string statjson = "{\"description\":{\"text\": \"" + ((c_server*)this->server_ptr)->config.motd + "\"}}";
+                c_s2c_status status = c_s2c_status(statjson);
+                c_packet packet;
+                status.serialize(packet);
+
+                this->send_packet(packet);
+                printf("Sent status: %s\r\n", statjson.c_str());
             }
             
             break;
@@ -79,7 +90,8 @@ void c_player::on_receive(c_packet& packet)
         {
             c_c2s_chat_message chat_message = c_c2s_chat_message();
             chat_message.deserialize(packet);
-            ((c_server*)this->server_ptr)->broadcast(chat_message.message);
+            std::string msg_final = "<" + this->name + "> " + chat_message.message;
+            ((c_server*)this->server_ptr)->broadcast(msg_final);
             break;
         }
         default:
@@ -95,7 +107,7 @@ void c_player::on_receive(c_packet& packet)
 void c_player::send_message(std::string& message)
 {
     c_packet packet;
-    std::string chat_json = "{\"text\":\"<" + this->name + "> " + message + "\"}";
+    std::string chat_json = "{\"text\":\"" + message + "\"}";
     c_s2c_chat_message chat_packet = c_s2c_chat_message
     (
         chat_json,
@@ -134,10 +146,7 @@ void c_player::send_packet(c_packet& packet)
 #else
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
 #endif
-                // Socket buffer is full, wait a bit and try again
-                // In a real implementation, you might want to use select() or poll()
-                // or queue the data for later sending
-                printf("Socket would block, retrying...\n");
+                printf("Socket would block\n");
                 continue;
             }
             else {
