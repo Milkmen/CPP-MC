@@ -111,6 +111,15 @@ int c_server::run()
                     CLOSE_SOCKET(fd);
                     FD_CLR(fd, &master_set);
                     client_buffers.erase(fd);
+
+                    auto player_it = players.find(fd);
+                    if (player_it != players.end()) {
+                        // Reset the player's state back to handshake for potential reconnection
+                        player_it->second.state = connection_state_t::handshake;
+                        player_it->second.name = "";
+                        // Remove the player entry completely
+                        players.erase(player_it);
+                    }
                 }
                 else {
                     auto& data_buf = client_buffers[fd];

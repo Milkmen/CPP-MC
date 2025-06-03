@@ -68,10 +68,6 @@ void c_player::on_receive(c_packet& packet)
                 this->send_packet(packet);
                 printf("Sent status: %s\r\n", statjson.c_str());
             }
-            else if (this->state == connection_state_t::play)
-            {
-                this->state = connection_state_t::handshake;
-            }
             
             break;
         }
