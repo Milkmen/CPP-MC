@@ -1,10 +1,15 @@
 #include "player.h"
 #include "server.h"
 
+#include <string>
+#include <sstream>
+
 void c_player::on_receive(c_packet& packet)
 {
     try
     {
+        c_server* server = ((c_server*)this->server_ptr);
+
         switch (packet.id)
         {
         case 0x0:
@@ -45,10 +50,17 @@ void c_player::on_receive(c_packet& packet)
                 join_game.serialize(packet_out);
                 this->send_packet(packet_out);
 
+                vec3d_t spawn_pos =
+                {
+                    static_cast<double>(server->config.spawn_x),
+                    static_cast<double>(server->config.spawn_y),
+                    static_cast<double>(server->config.spawn_z)
+                };
+
                 packet_out.clear();
                 c_s2c_position_look pos_look = c_s2c_position_look
                 (
-                    0.0, 64.0, 0.0,
+                    spawn_pos.x, spawn_pos.y, spawn_pos.z,
                     0.f, 0.f,
                     0b00000000,
                     1
@@ -60,13 +72,12 @@ void c_player::on_receive(c_packet& packet)
             }
             else if (this->state == connection_state_t::status)
             {
-                std::string statjson = "{\"description\":{\"text\": \"" + ((c_server*)this->server_ptr)->config.motd + "\"}}";
-                c_s2c_status status = c_s2c_status(statjson);
+                c_s2c_status status = c_s2c_status(server->server_status);
                 c_packet packet;
                 status.serialize(packet);
 
                 this->send_packet(packet);
-                printf("Sent status: %s\r\n", statjson.c_str());
+                printf("Sent status: %s\r\n", server->server_status.c_str());
             }
             
             break;
@@ -91,7 +102,7 @@ void c_player::on_receive(c_packet& packet)
             c_c2s_chat_message chat_message = c_c2s_chat_message();
             chat_message.deserialize(packet);
             std::string msg_final = "<" + this->name + "> " + chat_message.message;
-            ((c_server*)this->server_ptr)->broadcast(msg_final);
+            server->broadcast(msg_final);
             break;
         }
         case 0x0D:
@@ -146,30 +157,41 @@ void c_player::send_message(std::string& message)
 void c_player::send_packet(c_packet& packet)
 {
     if (packet.get_size() <= 1) return;
+
     std::lock_guard<std::mutex> lock(((c_server*) this->server_ptr)->send_mutex);
+
     auto& out = packet.get_raw();
     printf("Sending packet of %zu bytes: ", out.size());
-    for (size_t i = 0; i < min(out.size(), size_t(20)); i++) {
+    for (size_t i = 0; i < min(out.size(), size_t(20)); i++) 
+    {
         printf("%02X ", out[i]);
     }
+
     if (out.size() > 20) printf("...");
     printf("\n");
 
     size_t total_sent = 0;
     size_t total_size = out.size();
 
-    while (total_sent < total_size) {
-        int sent = send(this->client_fd,
+    while (total_sent < total_size) 
+    {
+        int sent = send
+        (
+            this->client_fd,
             reinterpret_cast<const char*>(out.data() + total_sent),
             static_cast<int>(total_size - total_sent),
-            0);
+            0
+        );
 
-        if (sent == SOCK_ERR_VAL) {
+        if (sent == SOCK_ERR_VAL) 
+        {
 #ifdef _WIN32
             int error = WSAGetLastError();
-            if (error == WSAEWOULDBLOCK) {
+            if (error == WSAEWOULDBLOCK) 
+            {
 #else
-            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) 
+            {
 #endif
                 printf("Socket would block\n");
                 continue;

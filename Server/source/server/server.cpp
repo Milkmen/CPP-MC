@@ -4,6 +4,8 @@
 
 #include <SimpleIni.h>
 #include <regex>
+#include <string>
+#include <sstream>
 
 std::string escape_json_string(const std::string& input) {
     std::string output;
@@ -43,9 +45,32 @@ c_server::c_server(const char* config_name)
 	long max_players			= ini.GetLongValue( "Server", "max_players", 16);
     const char* motd            = ini.GetValue("Server", "motd", "");
 
+    long spawn_x = ini.GetLongValue("World", "spawn_x", 0);
+    long spawn_y = ini.GetLongValue("World", "spawn_y", 64);
+    long spawn_z = ini.GetLongValue("World", "spawn_z", 0);
+
+
 	this->config.port			= port > UINT16_MAX ? UINT16_MAX : port;
 	this->config.max_players	= max_players > UINT8_MAX ? UINT8_MAX : max_players;
-    this->config.motd           = escape_json_string(std::string(motd));
+    this->config.motd           = std::string(motd);
+
+    std::ostringstream oss;
+
+    oss << "{";
+    oss << "\"version\":{";
+    oss << "\"name\":\"" << MC_VERSION_STR << "\",";
+    oss << "\"protocol\":" << MC_VERSION_ID << "";
+    oss << "},";
+    oss << "\"description\":{";
+    oss << "\"text\":\"" << escape_json_string(this->config.motd) << "\"";
+    oss << "}";
+    oss << "}";
+
+    this->server_status = oss.str();
+
+    this->config.spawn_x = spawn_x;
+    this->config.spawn_y = spawn_y;
+    this->config.spawn_z = spawn_z;
 
 	printf("Port: %d\n", this->config.port);
 	printf("Max Players: %d\n", this->config.max_players);

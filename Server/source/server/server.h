@@ -12,17 +12,22 @@
 #include <atomic>
 #include <mutex>
 
+#define MC_VERSION_STR  "1.12.2"
+#define MC_VERSION_ID   340
+
 typedef struct
 {
 	uint8_t max_players;
 	uint16_t port;
     std::string motd;
+    uint64_t spawn_x;
+    uint64_t spawn_y;
+    uint64_t spawn_z;
 }
 server_config_t;
 
 class c_server
 {
-private:
 public:
 	server_config_t config;
 	std::atomic<bool> running = false;
@@ -30,6 +35,7 @@ public:
 	std::vector<std::string> chat_messages;
 	std::thread update_thread;
     std::mutex send_mutex;
+    std::string server_status;
 
 	c_server(const char* config_name);
 
