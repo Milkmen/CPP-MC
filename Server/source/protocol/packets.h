@@ -81,6 +81,59 @@ public:
     }
 };
 
+class c_c2s_position : public c_packet_c2s
+{
+public:
+    double x, y, z;
+    uint8_t on_ground;
+
+    c_c2s_position() = default;
+
+    void deserialize(c_packet& packet) override
+    {
+        this->x = packet.read_double();
+        this->y = packet.read_double();
+        this->z = packet.read_double();
+        this->on_ground = packet.read_byte();
+    }
+};
+
+class c_c2s_look : public c_packet_c2s
+{
+public:
+    float yaw, pitch;
+    uint8_t on_ground;
+
+    c_c2s_look() = default;
+
+    void deserialize(c_packet& packet) override
+    {
+        this->yaw = packet.read_float();
+        this->pitch = packet.read_float();
+        this->on_ground = packet.read_byte();
+    }
+};
+
+class c_c2s_position_look : public c_packet_c2s
+{
+public:
+    double x, y, z;
+    float yaw, pitch;
+    uint8_t on_ground;
+
+    c_c2s_position_look() = default;
+
+    void deserialize(c_packet & packet) override
+    {
+        this->x = packet.read_double();
+        this->y = packet.read_double();
+        this->z = packet.read_double();
+        this->yaw = packet.read_float();
+        this->pitch = packet.read_float();
+        this->on_ground = packet.read_byte();
+    }
+};
+
 
 /*
     Server to Client Packets

@@ -68,6 +68,10 @@ void c_player::on_receive(c_packet& packet)
                 this->send_packet(packet);
                 printf("Sent status: %s\r\n", statjson.c_str());
             }
+            else if (this->state == connection_state_t::play)
+            {
+                this->state = connection_state_t::handshake;
+            }
             
             break;
         }
@@ -92,6 +96,31 @@ void c_player::on_receive(c_packet& packet)
             chat_message.deserialize(packet);
             std::string msg_final = "<" + this->name + "> " + chat_message.message;
             ((c_server*)this->server_ptr)->broadcast(msg_final);
+            break;
+        }
+        case 0x0D:
+        {
+            c_c2s_position pos = c_c2s_position();
+            pos.deserialize(packet);
+            this->position = { pos.x, pos.y, pos.z };
+            this->on_ground = pos.on_ground;
+            break;
+        }
+        case 0x0E:
+        {
+            c_c2s_position_look poslook = c_c2s_position_look();
+            poslook.deserialize(packet);
+            this->position = { poslook.x, poslook.y, poslook.z };
+            this->rotation = { poslook.yaw,  poslook.pitch };
+            this->on_ground = poslook.on_ground;
+            break;
+        }
+        case 0x0F:
+        {
+            c_c2s_look look = c_c2s_look();
+            look.deserialize(packet);
+            this->rotation = { look.yaw,  look.pitch };
+            this->on_ground = look.on_ground;
             break;
         }
         default:

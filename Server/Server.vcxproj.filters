@@ -49,6 +49,7 @@
     <ClInclude Include="libs\simpleini\SimpleIni.h" />
     <ClInclude Include="source\server\player.h" />
     <ClInclude Include="source\server\network.h" />
+    <ClInclude Include="source\math\math.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.ini" />

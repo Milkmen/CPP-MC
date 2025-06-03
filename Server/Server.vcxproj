@@ -184,6 +184,7 @@
     <ClInclude Include="libs\libnbt\nbt.h" />
     <ClInclude Include="libs\simpleini\ConvertUTF.h" />
     <ClInclude Include="libs\simpleini\SimpleIni.h" />
+    <ClInclude Include="source\math\math.h" />
     <ClInclude Include="source\protocol\packet.h" />
     <ClInclude Include="source\protocol\packets.h" />
     <ClInclude Include="source\server\network.h" />

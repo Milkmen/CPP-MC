@@ -4,6 +4,8 @@
 #include "network.h"
 #include "../protocol/packets.h"
 
+#include "../math/math.h"
+
 typedef enum
 {
 	hell = -1,
@@ -25,11 +27,15 @@ class c_player
 {
 private:
 public:
-	std::string name;
-	connection_state_t state;
-	uint64_t last_keep_alive;
-	socket_t	client_fd;
-	void* server_ptr;
+	std::string			name;
+	connection_state_t	state;
+	uint64_t			last_keep_alive;
+	socket_t			client_fd;
+	void*				server_ptr;
+
+	vec3d_t position;
+	angle_t rotation;
+	bool on_ground;
 
 	c_player() : name(""), state(connection_state_t::handshake) { }
 	c_player(const c_player&) = delete;
