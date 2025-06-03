@@ -5,6 +5,35 @@
 #include <SimpleIni.h>
 #include <regex>
 
+std::string escape_json_string(const std::string& input) {
+    std::string output;
+    output.reserve(input.size());
+
+    for (char c : input) {
+        switch (c) {
+        case '\"': output += "\\\""; break;
+        case '\\': output += "\\\\"; break;
+        case '\b': output += "\\b";  break;
+        case '\f': output += "\\f";  break;
+        case '\n': output += "\\n";  break;
+        case '\r': output += "\\r";  break;
+        case '\t': output += "\\t";  break;
+        default:
+            if (static_cast<unsigned char>(c) < 0x20) {
+                // Escape other control characters
+                char buf[7];
+                snprintf(buf, sizeof(buf), "\\u%04x", c);
+                output += buf;
+            }
+            else {
+                output += c;
+            }
+        }
+    }
+
+    return output;
+}
+
 c_server::c_server(const char* config_name)
 {
 	CSimpleIniA ini;
@@ -16,10 +45,11 @@ c_server::c_server(const char* config_name)
 
 	this->config.port			= port > UINT16_MAX ? UINT16_MAX : port;
 	this->config.max_players	= max_players > UINT8_MAX ? UINT8_MAX : max_players;
-    this->config.motd = std::string(motd);
+    this->config.motd           = escape_json_string(std::string(motd));
 
 	printf("Port: %d\n", this->config.port);
 	printf("Max Players: %d\n", this->config.max_players);
+    ini.Reset();
 }
 
 int c_server::run()
