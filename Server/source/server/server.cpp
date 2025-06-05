@@ -167,13 +167,14 @@ int c_server::run()
                     FD_CLR(fd, &master_set);
                     client_buffers.erase(fd);
 
-                    auto player_it = players.find(fd);
-                    if (player_it != players.end()) {
-                        // Reset the player's state back to handshake for potential reconnection
+                    auto player_it = this->players.find(fd);
+                    if (player_it != this->players.end()) {
                         player_it->second.state = connection_state_t::handshake;
                         player_it->second.name = "";
-                        // Remove the player entry completely
-                        players.erase(player_it);
+
+                        if(this->entities.size() > player_it->second.entity_id)
+                            this->entities.erase(this->entities.begin() + player_it->second.entity_id);
+                        this->players.erase(player_it);
                     }
                 }
                 else {

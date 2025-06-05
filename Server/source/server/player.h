@@ -32,6 +32,7 @@ public:
 	uint64_t			last_keep_alive;
 	socket_t			client_fd;
 	void*				server_ptr;
+	uint32_t			entity_id;
 
 	vec3d_t position;
 	angle_t rotation;
@@ -42,6 +43,10 @@ public:
 	c_player& operator=(const c_player&) = delete;
 
 	void on_receive(c_packet& packet);
+	void on_handshake(c_packet& packet);
+	void on_status(c_packet& packet);
+	void on_login(c_packet& packet);
+	void on_play(c_packet& packet);
 	void send_packet(c_packet& packet);
 	void send_message(std::string& message);
 };

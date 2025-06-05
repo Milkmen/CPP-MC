@@ -5,6 +5,7 @@
 #include <map>
 
 #include "network.h"
+#include "entity.h"
 
 #include "../protocol/packet.h"
 #include "player.h"
@@ -33,6 +34,7 @@ public:
 	std::atomic<bool> running = false;
 	std::map<socket_t, c_player> players;
 	std::vector<std::string> chat_messages;
+	std::vector<entity_entry_t> entities;
 	std::thread update_thread;
     std::mutex send_mutex;
     std::string server_status;

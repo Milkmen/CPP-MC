@@ -50,6 +50,7 @@
     <ClInclude Include="source\server\player.h" />
     <ClInclude Include="source\server\network.h" />
     <ClInclude Include="source\math\math.h" />
+    <ClInclude Include="source\server\entity.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.ini" />

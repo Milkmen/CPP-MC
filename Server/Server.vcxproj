@@ -187,6 +187,7 @@
     <ClInclude Include="source\math\math.h" />
     <ClInclude Include="source\protocol\packet.h" />
     <ClInclude Include="source\protocol\packets.h" />
+    <ClInclude Include="source\server\entity.h" />
     <ClInclude Include="source\server\network.h" />
     <ClInclude Include="source\server\player.h" />
     <ClInclude Include="source\server\server.h" />

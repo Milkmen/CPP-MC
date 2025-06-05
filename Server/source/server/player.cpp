@@ -4,134 +4,178 @@
 #include <string>
 #include <sstream>
 
+void c_player::on_handshake(c_packet& packet)
+{
+    switch (packet.id)
+    {
+    case 0x00:
+    {
+        c_c2s_handshake handshake = c_c2s_handshake();
+        handshake.deserialize(packet);
+        printf("Handshake Received with Version: %d\r\n", handshake.protocol_version);
+        printf("Next State: %d\r\n", handshake.next_state);
+        this->state = (connection_state_t)handshake.next_state;
+        break;
+    }
+    }
+}
+
+void c_player::on_status(c_packet& packet)
+{
+    c_server* server = ((c_server*)this->server_ptr);
+
+    switch (packet.id)
+    {
+    case 0x00:
+    {
+        c_s2c_status status = c_s2c_status(server->server_status);
+        c_packet packet;
+        status.serialize(packet);
+
+        this->send_packet(packet);
+        printf("Sent status: %s\r\n", server->server_status.c_str());
+        break;
+    }
+    case 0x01:
+    {
+        c_c2s_ping ping = c_c2s_ping();
+        ping.deserialize(packet);
+
+        c_s2c_pong pong = c_s2c_pong(ping.time);
+        c_packet pack;
+        pong.serialize(pack);
+
+        this->send_packet(pack);
+        break;
+    }
+    }
+}
+
+void c_player::on_login(c_packet& packet)
+{
+    c_server* server = ((c_server*)this->server_ptr);
+
+    switch (packet.id)
+    {
+    case 0x00:
+    {
+        c_c2s_login_start login_start = c_c2s_login_start();
+        login_start.deserialize(packet);
+
+        this->name = login_start.player_name;
+
+        c_packet packet_out;
+        c_s2c_login_success login_success = c_s2c_login_success(login_start.player_name, "123e4567-e89b-12d3-a456-426614174000");
+        login_success.serialize(packet_out);
+        this->send_packet(packet_out);
+
+        entity_entry_t entry =
+        {
+            entity_type_t::player, this->client_fd
+        };
+
+        this->entity_id = server->entities.size();
+        server->entities.push_back(entry);
+
+        packet_out.clear();
+        c_s2c_join_game join_game = c_s2c_join_game
+        (
+            this->entity_id,
+            0,
+            0,
+            1,
+            server->config.max_players,
+            "default",
+            0
+        );
+        join_game.serialize(packet_out);
+        this->send_packet(packet_out);
+
+        vec3d_t spawn_pos =
+        {
+            static_cast<double>(server->config.spawn_x),
+            static_cast<double>(server->config.spawn_y),
+            static_cast<double>(server->config.spawn_z)
+        };
+
+        packet_out.clear();
+        c_s2c_position_look pos_look = c_s2c_position_look
+        (
+            spawn_pos.x, spawn_pos.y, spawn_pos.z,
+            0.f, 0.f,
+            0b00000000,
+            1
+        );
+        pos_look.serialize(packet_out);
+        this->send_packet(packet_out);
+
+        this->state = connection_state_t::play;
+        break;
+    }
+    }
+}
+
+void c_player::on_play(c_packet& packet)
+{
+    c_server* server = ((c_server*)this->server_ptr);
+
+    switch (packet.id)
+    {
+    case 0x02:
+    {
+        c_c2s_chat_message chat_message = c_c2s_chat_message();
+        chat_message.deserialize(packet);
+        std::string msg_final = "<" + this->name + "> " + chat_message.message;
+        server->broadcast(msg_final);
+        break;
+    }
+    case 0x0D:
+    {
+        c_c2s_position pos = c_c2s_position();
+        pos.deserialize(packet);
+        this->position = { pos.x, pos.y, pos.z };
+        this->on_ground = pos.on_ground;
+        break;
+    }
+    case 0x0E:
+    {
+        c_c2s_position_look poslook = c_c2s_position_look();
+        poslook.deserialize(packet);
+        this->position = { poslook.x, poslook.y, poslook.z };
+        this->rotation = { poslook.yaw,  poslook.pitch };
+        this->on_ground = poslook.on_ground;
+        break;
+    }
+    case 0x0F:
+    {
+        c_c2s_look look = c_c2s_look();
+        look.deserialize(packet);
+        this->rotation = { look.yaw,  look.pitch };
+        this->on_ground = look.on_ground;
+        break;
+    }
+    }
+}
+
 void c_player::on_receive(c_packet& packet)
 {
     try
     {
         c_server* server = ((c_server*)this->server_ptr);
 
-        switch (packet.id)
+        switch (this->state)
         {
-        case 0x0:
-        {
-            if (this->state == connection_state_t::handshake)
-            {
-                c_c2s_handshake handshake = c_c2s_handshake();
-                handshake.deserialize(packet);
-                printf("Handshake Received with Version: %d\r\n", handshake.protocol_version);
-                printf("Next State: %d\r\n", handshake.next_state);
-                this->state = (connection_state_t) handshake.next_state;
-                break;
-            }
-
-            if (this->state == connection_state_t::login)
-            {
-                c_c2s_login_start login_start = c_c2s_login_start();
-                login_start.deserialize(packet);
-
-                this->name = login_start.player_name;
-
-                c_packet packet_out;
-                c_s2c_login_success login_success = c_s2c_login_success(login_start.player_name, "123e4567-e89b-12d3-a456-426614174000");
-                login_success.serialize(packet_out);
-                this->send_packet(packet_out);
-
-                packet_out.clear();
-                c_s2c_join_game join_game = c_s2c_join_game
-                (
-                    1,
-                    0,
-                    0,
-                    1,
-                    16,
-                    "default",
-                    0
-                );
-                join_game.serialize(packet_out);
-                this->send_packet(packet_out);
-
-                vec3d_t spawn_pos =
-                {
-                    static_cast<double>(server->config.spawn_x),
-                    static_cast<double>(server->config.spawn_y),
-                    static_cast<double>(server->config.spawn_z)
-                };
-
-                packet_out.clear();
-                c_s2c_position_look pos_look = c_s2c_position_look
-                (
-                    spawn_pos.x, spawn_pos.y, spawn_pos.z,
-                    0.f, 0.f,
-                    0b00000000,
-                    1
-                );
-                pos_look.serialize(packet_out);
-                this->send_packet(packet_out);
-
-                this->state = connection_state_t::play;
-            }
-            else if (this->state == connection_state_t::status)
-            {
-                c_s2c_status status = c_s2c_status(server->server_status);
-                c_packet packet;
-                status.serialize(packet);
-
-                this->send_packet(packet);
-                printf("Sent status: %s\r\n", server->server_status.c_str());
-            }
-            
+        case connection_state_t::handshake:
+            this->on_handshake(packet);
             break;
-        }
-        case 0x01:
-        {
-            if (this->state == connection_state_t::status)
-            {
-                c_c2s_ping ping = c_c2s_ping();
-                ping.deserialize(packet);
-
-                c_s2c_pong pong = c_s2c_pong(ping.time);
-                c_packet pack;
-                pong.serialize(pack);
-
-                this->send_packet(pack);
-            }
+        case connection_state_t::status:
+            this->on_status(packet);
             break;
-        }
-        case 0x02:
-        {
-            c_c2s_chat_message chat_message = c_c2s_chat_message();
-            chat_message.deserialize(packet);
-            std::string msg_final = "<" + this->name + "> " + chat_message.message;
-            server->broadcast(msg_final);
+        case connection_state_t::login:
+            this->on_login(packet);
             break;
-        }
-        case 0x0D:
-        {
-            c_c2s_position pos = c_c2s_position();
-            pos.deserialize(packet);
-            this->position = { pos.x, pos.y, pos.z };
-            this->on_ground = pos.on_ground;
-            break;
-        }
-        case 0x0E:
-        {
-            c_c2s_position_look poslook = c_c2s_position_look();
-            poslook.deserialize(packet);
-            this->position = { poslook.x, poslook.y, poslook.z };
-            this->rotation = { poslook.yaw,  poslook.pitch };
-            this->on_ground = poslook.on_ground;
-            break;
-        }
-        case 0x0F:
-        {
-            c_c2s_look look = c_c2s_look();
-            look.deserialize(packet);
-            this->rotation = { look.yaw,  look.pitch };
-            this->on_ground = look.on_ground;
-            break;
-        }
-        default:
-            printf("Unknown packet ID: 0x%02X\n", packet.id);
+        case connection_state_t::play:
+            this->on_play(packet);
             break;
         }
     }
